@@ -7,10 +7,16 @@ import AdminPanel from "./components/AdminPanel";
 import Toast from "./components/Toast";
 
 export default function App() {
-  const { account, isAdmin, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, grantStatus, error, history, toasts, connect, claim, grantReward, dismissToast } = useContract();
+  const {
+    account, isAdmin, rewardAmount, claimed, wrongNetwork, history,
+    loadingRead, txStatus, grantStatus, error, toasts,
+    connect, claim, grantReward, dismissToast,
+  } = useContract();
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
+        {/* Header + wallet */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
@@ -24,6 +30,7 @@ export default function App() {
           <ConnectWallet account={account} onConnect={connect} />
         </div>
 
+        {/* Network warning */}
         {account && wrongNetwork && (
           <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
@@ -31,6 +38,7 @@ export default function App() {
           </div>
         )}
 
+        {/* Konten utama */}
         {!account ? (
           <div className="rounded-xl border border-slate-200 bg-white py-12 text-center">
             <svg className="mx-auto h-8 w-8 text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>
@@ -51,6 +59,7 @@ export default function App() {
         )}
       </div>
 
+      {/* Toast notifikasi real-time */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
