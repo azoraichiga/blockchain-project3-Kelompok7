@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { MOCK_ADDRESS, MOCK_STATE, MOCK_HISTORY, sleep } from "../utils/mockData";
+
+let toastId = 0;
 
 export function useContract() {
   const [account, setAccount] = useState(null);
@@ -9,6 +11,14 @@ export function useContract() {
   const [loadingRead, setLoadingRead] = useState(false);
   const [txStatus, setTxStatus] = useState("idle");
   const [history, setHistory] = useState([]);
+  const [toasts, setToasts] = useState([]);
+
+  const pushToast = useCallback((message, kind = "info") => {
+    const id = ++toastId;
+    setToasts((t) => [...t, { id, message, kind }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+  }, []);
+  const dismissToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
   const [error, setError] = useState(null);
 
   // ---- READ OPERATIONS (2) ----
@@ -39,11 +49,12 @@ export function useContract() {
       setClaimed(true);
       setTxStatus("success");
       addHistory({ type: "Reward claimed", amount: rewardAmount, by: "Kamu", time: "baru saja" });
+      pushToast(`Reward ${rewardAmount} CRT berhasil diklaim`, "success");
     } catch (e) {
       setTxStatus("failed");
       setError("Transaksi ditolak di MetaMask. Coba lagi.");
     }
-  }, [rewardAmount, addHistory]);
+  }, [rewardAmount, addHistory, pushToast]);
 
   const connect = useCallback(async () => {
     setError(null);
@@ -52,5 +63,18 @@ export function useContract() {
     await readData();
   }, [readData]);
 
-  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, error, history, connect, claim };
+  // ---- EVENT LISTENING (real-time) ----
+  // TODO(Web3): ganti dengan contract.on("RewardGranted"/"RewardClaimed", ...)
+  const ticked = useRef(false);
+  useEffect(() => {
+    if (!account || ticked.current) return;
+    ticked.current = true;
+    const t = setTimeout(() => {
+      addHistory({ type: "Reward granted", amount: 50, by: "Dosen", time: "baru saja" });
+      pushToast("Reward baru masuk: 50 CRT dari Dosen", "info");
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [account, addHistory, pushToast]);
+
+  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, error, history, toasts, connect, claim, dismissToast };
 }
