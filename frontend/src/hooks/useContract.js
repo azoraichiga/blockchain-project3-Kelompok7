@@ -7,6 +7,7 @@ export function useContract() {
   const [claimed, setClaimed] = useState(false);
   const [wrongNetwork, setWrongNetwork] = useState(false);
   const [loadingRead, setLoadingRead] = useState(false);
+  const [txStatus, setTxStatus] = useState("idle");
   const [error, setError] = useState(null);
 
   // ---- READ OPERATIONS (2) ----
@@ -24,6 +25,20 @@ export function useContract() {
     }
   }, []);
 
+  // ---- WRITE #1: CLAIM ----
+  const claim = useCallback(async () => {
+    setError(null);
+    setTxStatus("pending");
+    try {
+      await sleep(1600); // TODO(Web3): contract.claimReward() lalu tx.wait()
+      setClaimed(true);
+      setTxStatus("success");
+    } catch (e) {
+      setTxStatus("failed");
+      setError("Transaksi gagal. Coba lagi.");
+    }
+  }, []);
+
   const connect = useCallback(async () => {
     setError(null);
     setAccount(MOCK_ADDRESS);
@@ -31,5 +46,5 @@ export function useContract() {
     await readData();
   }, [readData]);
 
-  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, error, connect };
+  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, error, connect, claim };
 }
