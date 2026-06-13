@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { MOCK_ADDRESS, MOCK_STATE, sleep } from "../utils/mockData";
+import { MOCK_ADDRESS, MOCK_STATE, MOCK_HISTORY, sleep } from "../utils/mockData";
 
 export function useContract() {
   const [account, setAccount] = useState(null);
@@ -8,6 +8,7 @@ export function useContract() {
   const [wrongNetwork, setWrongNetwork] = useState(false);
   const [loadingRead, setLoadingRead] = useState(false);
   const [txStatus, setTxStatus] = useState("idle");
+  const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
 
   // ---- READ OPERATIONS (2) ----
@@ -18,12 +19,15 @@ export function useContract() {
       await sleep(900); // TODO(Web3): ganti dengan contract.getRewardAmount + hasClaimed
       setRewardAmount(MOCK_STATE.rewardAmount);
       setClaimed(MOCK_STATE.claimed);
+      setHistory(MOCK_HISTORY);
     } catch (e) {
       setError("Gagal membaca data dari blockchain.");
     } finally {
       setLoadingRead(false);
     }
   }, []);
+
+  const addHistory = useCallback((entry) => setHistory((h) => [entry, ...h]), []);
 
   // ---- WRITE #1: CLAIM ----
   const claim = useCallback(async () => {
@@ -34,11 +38,12 @@ export function useContract() {
       if (Math.random() < 0.12) throw { code: 4001 }; // simulasi user reject
       setClaimed(true);
       setTxStatus("success");
+      addHistory({ type: "Reward claimed", amount: rewardAmount, by: "Kamu", time: "baru saja" });
     } catch (e) {
       setTxStatus("failed");
       setError("Transaksi ditolak di MetaMask. Coba lagi.");
     }
-  }, []);
+  }, [rewardAmount, addHistory]);
 
   const connect = useCallback(async () => {
     setError(null);
@@ -47,5 +52,5 @@ export function useContract() {
     await readData();
   }, [readData]);
 
-  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, error, connect, claim };
+  return { account, rewardAmount, claimed, wrongNetwork, loadingRead, txStatus, error, history, connect, claim };
 }

@@ -6,4 +6,9 @@ export const MOCK_STATE = {
   wrongNetwork: false,
 };
 
+export const MOCK_HISTORY = [
+  { type: "Reward granted", amount: 100, by: "Dosen", time: "2 hari lalu" },
+  { type: "Reward granted", amount: 150, by: "Dosen", time: "kemarin" },
+];
+
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
