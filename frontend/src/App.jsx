@@ -1,6 +1,8 @@
+import { useContract } from "./hooks/useContract";
 import ConnectWallet from "./components/ConnectWallet";
 
 export default function App() {
+  const { account, connect } = useContract();
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
@@ -14,8 +16,14 @@ export default function App() {
               <p className="text-xs text-slate-400">Sistem reward mahasiswa on-chain</p>
             </div>
           </div>
-          <ConnectWallet />
+          <ConnectWallet account={account} onConnect={connect} />
         </div>
+        {!account && (
+          <div className="rounded-xl border border-slate-200 bg-white py-12 text-center">
+            <p className="mt-3 text-[15px] font-medium text-slate-900">Hubungkan dompet untuk mulai</p>
+            <p className="mt-1 text-sm text-slate-500">Connect MetaMask untuk melihat dan klaim reward kamu.</p>
+          </div>
+        )}
       </div>
     </div>
   );
