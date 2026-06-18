@@ -229,6 +229,43 @@ export function useContract() {
     };
   }, [account, addHistory, pushToast]);
 
+  // Tanpa ini, kalau user ganti akun atau ganti network lewat MetaMask
+  // (bukan lewat tombol Connect di UI kita), state di aplikasi jadi basi
+  // — masih menampilkan data akun lama padahal MetaMask sudah pindah.
+  // Diadaptasi dari implementasi Anggota 3 (Web3 integration).
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0) {
+        setAccount(null);
+        setIsAdmin(false);
+        setRewardAmount(0);
+        setHasClaimed(false);
+        setIsWhitelisted(false);
+        setHistory([]);
+        setError(null);
+      } else {
+        setAccount(accounts[0]);
+        readData(accounts[0]);
+      }
+    };
+
+    const handleChainChanged = () => {
+      // Reload halaman saat network berubah — rekomendasi resmi MetaMask,
+      // karena provider/signer lama bisa tidak valid lagi setelah pindah network.
+      window.location.reload();
+    };
+
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      window.ethereum.removeListener("chainChanged", handleChainChanged);
+    };
+  }, [readData]);
+
   return {
     account, isAdmin, wrongNetwork,
     rewardAmount, hasClaimed, isWhitelisted, isActive, claimDeadline, contractBalance,
