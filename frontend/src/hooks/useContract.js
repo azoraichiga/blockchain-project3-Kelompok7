@@ -114,27 +114,31 @@ export function useContract() {
     }
   }, [readData]);
 
+  // Kontrak akan menolak (revert) kalau: !isActive, lewat deadline,
+  // belum di-whitelist, sudah pernah claim, atau saldo kontrak kurang.
+  // Semua pesan itu sudah dipetakan di helpers.friendlyError().
   const claim = useCallback(async () => {
     setError(null);
     setTxStatus("pending");
     try {
-      await sleep(1600); // TODO(Web3): ganti dengan kontrak asli:
-      // const provider = new ethers.BrowserProvider(window.ethereum);
-      // const signer = await provider.getSigner();
-      // const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      // const tx = await contract.claimReward();
-      // await tx.wait();
-      if (Math.random() < 0.12) throw { code: 4001 };
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      const tx = await contract.claimReward();
+      await tx.wait();
+
       setHasClaimed(true);
       setTxStatus("success");
       addHistory({ type: "Reward claimed", amount: rewardAmount, by: "Kamu", time: "baru saja" });
       pushToast(`Reward ${rewardAmount} ETH berhasil diklaim`, "success");
+
+      // Refresh saldo kontrak juga, karena claim mengurangi address(this).balance.
+      if (account) await readData(account);
     } catch (e) {
       setTxStatus("failed");
-      // setError(friendlyError(e)); // TODO(Web3): pakai ini
-      setError("Transaksi ditolak di MetaMask. Coba lagi.");
+      setError(friendlyError(e));
     }
-  }, [rewardAmount, addHistory, pushToast]);
+  }, [rewardAmount, addHistory, pushToast, account, readData]);
 
   // amount yang dikirim ke kontrak harus dalam WEI, bukan ETH biasa.
   const grantReward = useCallback(async (studentAddr, amountEth) => {
