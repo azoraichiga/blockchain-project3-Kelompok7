@@ -1,16 +1,15 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI, EXPECTED_CHAIN_ID } from "../utils/contract";
 import { friendlyError } from "../utils/helpers";
-import { MOCK_HISTORY, sleep } from "../utils/mockData";
 
 let toastId = 0;
 
 /**
  * Hook ini membungkus semua logika wallet + kontrak.
- * connect() dan readData() SUDAH terhubung sungguhan ke kontrak via
- * ethers.js. Fungsi write (claim/grantReward/fundContract) dan event
- * listener masih mock, menyusul di commit berikutnya.
+ * SUDAH terhubung sungguhan ke contracts/CourseReward.sol via ethers.js
+ * (bukan mock lagi) — diuji terhadap kontrak yang di-deploy di
+ * Hardhat localhost, address di utils/contract.js.
  *
  * PENTING: kontrak asli (contracts/CourseReward.sol, dibuat oleh
  * anggota Smart Contract) berbeda dari draft awal:
@@ -78,7 +77,8 @@ export function useContract() {
       setIsActive(active);
       setClaimDeadline(Number(deadline));
       setContractBalance(Number(ethers.formatEther(balance)));
-      setHistory(MOCK_HISTORY); // TODO(Web3): riwayat asli nanti dari event listener
+      // Riwayat TIDAK direset di sini — diisi murni dari event listener
+      // (RewardGranted/RewardClaimed) di bagian bawah hook ini.
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -129,7 +129,6 @@ export function useContract() {
 
       setHasClaimed(true);
       setTxStatus("success");
-      addHistory({ type: "Reward claimed", amount: rewardAmount, by: "Kamu", time: "baru saja" });
       pushToast(`Reward ${rewardAmount} ETH berhasil diklaim`, "success");
 
       // Refresh saldo kontrak juga, karena claim mengurangi address(this).balance.
@@ -153,7 +152,6 @@ export function useContract() {
       await tx.wait(); // tunggu transaksi benar-benar masuk blok & terkonfirmasi
 
       setGrantStatus("success");
-      addHistory({ type: "Reward granted", amount: Number(amountEth), by: "Dosen", time: "baru saja" });
       pushToast(`Memberi ${amountEth} ETH ke ${studentAddr.slice(0, 6)}…`, "success");
       setTimeout(() => setGrantStatus("idle"), 2500);
 
@@ -192,15 +190,43 @@ export function useContract() {
     }
   }, [pushToast, account, readData]);
 
-  const ticked = useRef(false);
+  // Mendengarkan event RewardGranted & RewardClaimed langsung dari
+  // kontrak. Ini jadi satu-satunya sumber riwayat transaksi sekarang —
+  // addHistory() manual di claim()/grantReward()/fundContract() dihapus
+  // supaya tidak dobel.
   useEffect(() => {
-    if (!account || ticked.current) return;
-    ticked.current = true;
-    const t = setTimeout(() => {
-      addHistory({ type: "Reward granted", amount: 0.01, by: "Dosen", time: "baru saja" });
-      pushToast("Reward baru masuk: 0.01 ETH dari Dosen", "info");
-    }, 5000);
-    return () => clearTimeout(t);
+    if (!account) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+    const onGranted = (student, amount) => {
+      addHistory({
+        type: "Reward granted",
+        amount: Number(ethers.formatEther(amount)),
+        by: "Dosen",
+        time: "baru saja",
+      });
+      pushToast(`Reward baru: ${ethers.formatEther(amount)} ETH untuk ${student.slice(0, 6)}…`, "info");
+    };
+    const onClaimed = (student, amount) => {
+      addHistory({
+        type: "Reward claimed",
+        amount: Number(ethers.formatEther(amount)),
+        by: student.toLowerCase() === account.toLowerCase() ? "Kamu" : "Mahasiswa",
+        time: "baru saja",
+      });
+      pushToast(`Klaim terkonfirmasi: ${ethers.formatEther(amount)} ETH`, "success");
+    };
+
+    contract.on("RewardGranted", onGranted);
+    contract.on("RewardClaimed", onClaimed);
+
+    // Cleanup WAJIB: kalau tidak dilepas, setiap kali komponen re-render
+    // listener lama menumpuk dan event yang sama bisa terdengar berkali-kali.
+    return () => {
+      contract.off("RewardGranted", onGranted);
+      contract.off("RewardClaimed", onClaimed);
+    };
   }, [account, addHistory, pushToast]);
 
   return {
