@@ -11,8 +11,7 @@ let toastId = 0;
  * (bukan mock lagi) — diuji terhadap kontrak yang di-deploy di
  * Hardhat localhost, address di utils/contract.js.
  *
- * PENTING: kontrak asli (contracts/CourseReward.sol, dibuat oleh
- * anggota Smart Contract) berbeda dari draft awal:
+ * Catatan penting soal kontrak (dibuat oleh anggota Smart Contract):
  *   - claimReward() mentransfer ETH SUNGGUHAN ke mahasiswa, bukan
  *     cuma menandai poin. amount dalam satuan wei.
  *   - Tidak ada getRewardAmount()/getClaimStatus() terpisah.
@@ -27,6 +26,7 @@ export function useContract() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [wrongNetwork, setWrongNetwork] = useState(false);
 
+  // ---- Data dari getStudentInfo() + state kontrak lain ----
   const [rewardAmount, setRewardAmount] = useState(0);
   const [hasClaimed, setHasClaimed] = useState(false);
   const [isWhitelisted, setIsWhitelisted] = useState(false);
@@ -37,11 +37,12 @@ export function useContract() {
   const [history, setHistory] = useState([]);
 
   const [loadingRead, setLoadingRead] = useState(false);
-  const [txStatus, setTxStatus] = useState("idle");
+  const [txStatus, setTxStatus] = useState("idle"); // idle | pending | success | failed
   const [grantStatus, setGrantStatus] = useState("idle");
   const [fundStatus, setFundStatus] = useState("idle");
   const [error, setError] = useState(null);
 
+  // ---- TOAST NOTIFICATIONS (untuk event real-time) ----
   const [toasts, setToasts] = useState([]);
   const pushToast = useCallback((message, kind = "info") => {
     const id = ++toastId;
@@ -58,6 +59,7 @@ export function useContract() {
     setHistory((h) => [entry, ...h]);
   }, []);
 
+  // ---- READ OPERATIONS ----
   // Membaca getStudentInfo (gabungan 3 nilai), isActive, claimDeadline,
   // dan getBalance() kontrak — semua dipakai untuk menentukan apakah
   // tombol claim boleh aktif dan kenapa kalau tidak.
@@ -78,7 +80,8 @@ export function useContract() {
       setClaimDeadline(Number(deadline));
       setContractBalance(Number(ethers.formatEther(balance)));
       // Riwayat TIDAK direset di sini — diisi murni dari event listener
-      // (RewardGranted/RewardClaimed) di bagian bawah hook ini.
+      // (RewardGranted/RewardClaimed) di bagian bawah hook ini, supaya
+      // tidak menimpa riwayat yang sudah terkumpul selama sesi berjalan.
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -86,6 +89,7 @@ export function useContract() {
     }
   }, []);
 
+  // ---- WALLET CONNECTION ----
   const connect = useCallback(async () => {
     setError(null);
     if (!window.ethereum) {
@@ -114,6 +118,7 @@ export function useContract() {
     }
   }, [readData]);
 
+  // ---- WRITE #1: CLAIM (mahasiswa) ----
   // Kontrak akan menolak (revert) kalau: !isActive, lewat deadline,
   // belum di-whitelist, sudah pernah claim, atau saldo kontrak kurang.
   // Semua pesan itu sudah dipetakan di helpers.friendlyError().
@@ -136,10 +141,11 @@ export function useContract() {
       if (account) await readData(account);
     } catch (e) {
       setTxStatus("failed");
-      setError(friendlyError(e));
+      setError(friendlyError(e)); // kontrak punya banyak require() spesifik (deadline, whitelist, dst)
     }
   }, [rewardAmount, addHistory, pushToast, account, readData]);
 
+  // ---- WRITE #2: GRANT REWARD (dosen/admin) ----
   // amount yang dikirim ke kontrak harus dalam WEI, bukan ETH biasa.
   const grantReward = useCallback(async (studentAddr, amountEth) => {
     setError(null);
@@ -148,6 +154,8 @@ export function useContract() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      // Kontrak menyimpan amount dalam wei, jadi angka ETH dari form
+      // (misal "0.05") harus dikonversi dulu.
       const amountWei = ethers.parseEther(String(amountEth));
       const tx = await contract.grantReward(studentAddr, amountWei);
       pushToast("Transaksi dikirim, menunggu konfirmasi…", "info");
@@ -157,7 +165,8 @@ export function useContract() {
       pushToast(`Memberi ${amountEth} ETH ke ${studentAddr.slice(0, 6)}…`, "success");
       setTimeout(() => setGrantStatus("idle"), 2500);
 
-      // Refresh data kalau yang diberi reward adalah akun yang sedang connect.
+      // Refresh data kalau yang diberi reward adalah akun yang sedang connect
+      // (mis. dosen sedang mengetes dengan akun sendiri).
       if (account && studentAddr.toLowerCase() === account.toLowerCase()) {
         await readData(account);
       }
@@ -167,6 +176,7 @@ export function useContract() {
     }
   }, [addHistory, pushToast, account, readData]);
 
+  // ---- WRITE #3 (admin): FUND CONTRACT ----
   // Kontrak menyimpan saldo ETH-nya sendiri untuk membayar klaim
   // (lihat claimReward -> payable transfer). Tanpa ini, semua klaim
   // akan gagal dengan "Insufficient contract balance".
@@ -177,7 +187,8 @@ export function useContract() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-      // fund() adalah fungsi payable: ETH dikirim lewat { value: ... }.
+      // fund() adalah fungsi payable: ETH dikirim lewat { value: ... },
+      // bukan lewat parameter biasa.
       const tx = await contract.fund({ value: ethers.parseEther(String(amountEth)) });
       pushToast("Transaksi dikirim, menunggu konfirmasi…", "info");
       await tx.wait();
@@ -186,6 +197,7 @@ export function useContract() {
       pushToast(`Kontrak ditambah dana ${amountEth} ETH`, "success");
       setTimeout(() => setFundStatus("idle"), 2500);
 
+      // Refresh saldo kontrak supaya panel admin langsung akurat.
       if (account) await readData(account);
     } catch (e) {
       setFundStatus("failed");
@@ -193,10 +205,12 @@ export function useContract() {
     }
   }, [pushToast, account, readData]);
 
+  // ---- EVENT LISTENING (real-time) ----
   // Mendengarkan event RewardGranted & RewardClaimed langsung dari
-  // kontrak. Ini jadi satu-satunya sumber riwayat transaksi sekarang —
-  // addHistory() manual di claim()/grantReward()/fundContract() dihapus
-  // supaya tidak dobel.
+  // kontrak. Begini ini menjadi SATU-SATUNYA sumber riwayat transaksi —
+  // addHistory() manual di claim()/grantReward()/fundContract() sengaja
+  // dihapus supaya tidak dobel (kalau ada baris addHistory tersisa di
+  // fungsi-fungsi itu, hapus juga).
   useEffect(() => {
     if (!account) return;
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -232,15 +246,16 @@ export function useContract() {
     };
   }, [account, addHistory, pushToast]);
 
+  // ---- HANDLE PERUBAHAN AKUN/NETWORK LANGSUNG DARI METAMASK ----
   // Tanpa ini, kalau user ganti akun atau ganti network lewat MetaMask
   // (bukan lewat tombol Connect di UI kita), state di aplikasi jadi basi
   // — masih menampilkan data akun lama padahal MetaMask sudah pindah.
-  // Diadaptasi dari implementasi Anggota 3 (Web3 integration).
   useEffect(() => {
     if (!window.ethereum) return;
 
     const handleAccountsChanged = (accounts) => {
       if (accounts.length === 0) {
+        // User disconnect semua akun dari MetaMask untuk situs ini.
         setAccount(null);
         setIsAdmin(false);
         setRewardAmount(0);
@@ -249,14 +264,16 @@ export function useContract() {
         setHistory([]);
         setError(null);
       } else {
+        // User ganti ke akun lain — sinkronkan ulang.
         setAccount(accounts[0]);
         readData(accounts[0]);
       }
     };
 
     const handleChainChanged = () => {
-      // Reload halaman saat network berubah — rekomendasi resmi MetaMask,
-      // karena provider/signer lama bisa tidak valid lagi setelah pindah network.
+      // Reload halaman saat network berubah — ini rekomendasi resmi
+      // MetaMask sendiri, karena provider/signer lama bisa jadi tidak
+      // valid lagi setelah pindah network.
       window.location.reload();
     };
 
