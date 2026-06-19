@@ -97,4 +97,17 @@ http://localhost:5173
 
 ## Screenshot
 
-<!-- Screenshot aplikasi -->
+**1. Tampilan Awal Panel Dosen (Admin)**
+![Panel Dosen](img/1-admin-panel.png)
+
+**2. Dosen Memberikan Reward**
+![Admin Grant Reward](img/2-admin-grant.png)
+
+**3. Proses Ganti Akun di MetaMask**
+![MetaMask Switch Account](img/3-metamask-switch.png)
+
+**4. Mahasiswa Siap Mengklaim Reward**
+![Student Ready to Claim](img/4-student-ready.png)
+
+**5. Mahasiswa Telah Mengklaim Reward**
+![Student Claimed](img/5-student-claimed.png)
