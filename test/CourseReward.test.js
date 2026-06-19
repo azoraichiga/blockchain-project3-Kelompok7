@@ -332,4 +332,153 @@ describe("Fund", function () {
 
     });
 
+    // ==================================================
+    // DEADLINE
+    // ==================================================
+
+describe("Deadline", function () {
+
+    it("owner can update deadline", async function () {
+
+        const oldDeadline =
+            await contract.claimDeadline();
+
+        await contract.setDeadline(60);
+
+        const newDeadline =
+            await contract.claimDeadline();
+
+        expect(newDeadline)
+            .to.be.gt(oldDeadline);
+    });
+
+    it("non-owner cannot update deadline", async function () {
+
+        await expect(
+            contract
+                .connect(student1)
+                .setDeadline(60)
+        ).to.be.reverted;
+    });
+
+});
+
+    //claimers count
+    it("tracks claimers count", async function () {
+
+    await contract.grantReward(
+        student1.address,
+        REWARD
+    );
+
+    await contract
+        .connect(student1)
+        .claimReward();
+
+    expect(
+        await contract.getClaimersCount()
+    ).to.equal(1);
+});
+
+    //getallclaimers
+    it("stores claimer addresses", async function () {
+
+    await contract.grantReward(
+        student1.address,
+        REWARD
+    );
+
+    await contract
+        .connect(student1)
+        .claimReward();
+
+    const claimers =
+        await contract.getAllClaimers();
+
+    expect(
+        claimers[0]
+    ).to.equal(
+        student1.address
+    );
+});
+
+    //getstudent info
+    //info[0] = hasClaimed
+//info[1] = whitelist
+//info[2] = rewardAmount
+    describe("Student Info", function () {
+
+    it("returns correct student info", async function () {
+
+        await contract.grantReward(
+            student1.address,
+            REWARD
+        );
+
+        const info =
+            await contract.getStudentInfo(
+                student1.address
+            );
+
+        expect(info[0])
+            .to.equal(false);
+
+        expect(info[1])
+            .to.equal(true);
+
+        expect(info[2])
+            .to.equal(REWARD);
+    });
+
+});
+
+    //is deadline passed
+    describe("Deadline Check", function () {
+
+    it("returns true after deadline", async function () {
+
+        await ethers.provider.send(
+            "evm_increaseTime",
+            [31 * 24 * 60 * 60]
+        );
+
+        await ethers.provider.send(
+            "evm_mine",
+            []
+        );
+
+        expect(
+            await contract.isDeadlinePassed()
+        ).to.equal(true);
+    });
+
+});
+
+    //reject claims after deadline
+    it("rejects claim after deadline", async function () {
+
+    await contract.grantReward(
+        student1.address,
+        REWARD
+    );
+
+    await ethers.provider.send(
+        "evm_increaseTime",
+        [31 * 24 * 60 * 60]
+    );
+
+    await ethers.provider.send(
+        "evm_mine",
+        []
+    );
+
+    await expect(
+        contract
+            .connect(student1)
+            .claimReward()
+    ).to.be.revertedWith(
+        "Claim deadline has passed"
+    );
+});
+
 });
