@@ -29,7 +29,7 @@ export const formatDeadline = (epochSeconds) => {
 export function friendlyError(error) {
   const msg = (error?.reason || error?.message || "").toLowerCase();
 
-  if (error?.code === 4001 || msg.includes("user rejected") || msg.includes("user denied")) {
+  if (error?.code === 4001 || error?.code === "ACTION_REJECTED" || msg.includes("user rejected") || msg.includes("user denied")) {
     return "Transaksi dibatalkan. Kamu menolak permintaan di MetaMask.";
   }
   if (msg.includes("insufficient funds")) {
