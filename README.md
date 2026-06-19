@@ -89,7 +89,7 @@ http://localhost:5173
 ## Contract Address
 
 - Local: `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6`
-- Testnet (opsional): *(Belum di-deploy)*
+- Sepolia Testnet: [`0x984D606d2498aC8F3198cb4218961216c4130CD2`](https://sepolia.etherscan.io/address/0x984D606d2498aC8F3198cb4218961216c4130CD2)
 
 ## Live Demo
 

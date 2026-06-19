@@ -1,16 +1,14 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-    const signers = await ethers.getSigners();
-    const deployer = signers[0]; // Pakai akun 0 agar user tetap jadi Admin
-
-    // Burn nonce dengan mengirim transaksi kosong ke diri sendiri
-    await deployer.sendTransaction({
-        to: deployer.address,
-        value: 0
-    });
+    const [deployer] = await ethers.getSigners();
 
     console.log("Deploying contracts with the account:", deployer.address);
+    console.log(
+        "Account balance:",
+        ethers.formatEther(await deployer.provider.getBalance(deployer.address)),
+        "ETH"
+    );
 
     const DURATION_DAYS = 30;
 
@@ -24,29 +22,24 @@ async function main() {
         await CourseReward.deploy(
             DURATION_DAYS,
             {
-                value: ethers.parseEther("10")
+                value: ethers.parseEther("0.01") // 0.01 SepETH cukup untuk demo
             }
         );
 
     await contract.waitForDeployment();
 
-    console.log(
-        "Contract deployed at:",
-        await contract.getAddress()
-    );
+    const address = await contract.getAddress();
 
-    console.log(
-        "Owner:",
-        await contract.owner()
-    );
-
+    console.log("Contract deployed at:", address);
+    console.log("Owner:", await contract.owner());
     console.log(
         "Balance:",
-        ethers.formatEther(
-            await contract.getBalance()
-        ),
+        ethers.formatEther(await contract.getBalance()),
         "ETH"
     );
+
+    console.log("\n✅ Update CONTRACT_ADDRESS di frontend/src/utils/contract.js:");
+    console.log(`   export const CONTRACT_ADDRESS = "${address}";`);
 }
 
 main().catch((error) => {

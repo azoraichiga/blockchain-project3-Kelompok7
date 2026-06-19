@@ -14,7 +14,7 @@
 //   - Ada deadline (claimDeadline) dan status aktif (isActive)
 //     yang bisa membuat claim gagal walau reward tersedia.
 // =============================================================
-export const CONTRACT_ADDRESS = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
+export const CONTRACT_ADDRESS = "0x984D606d2498aC8F3198cb4218961216c4130CD2"; // Sepolia Testnet
 
 export const CONTRACT_ABI = [
   // --- READ ---
