@@ -111,3 +111,12 @@ http://localhost:5173
 
 **5. Mahasiswa Telah Mengklaim Reward**
 ![Student Claimed](img/5-student-claimed.png)
+
+**6. Konfirmasi Transaksi Klaim di MetaMask**
+![MetaMask Confirm](img/6-metamask-confirm.png)
+
+**7. Notifikasi Sukses Klaim (Dark Mode)**
+![Success Toast Dark](img/7-claim-success-dark.png)
+
+**8. Tampilan Akhir Setelah Klaim Berhasil (Light Mode)**
+![Final State Light](img/8-claim-success-light.png)
