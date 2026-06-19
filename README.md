@@ -122,3 +122,13 @@ http://localhost:5173
 
 **8. Tampilan Akhir Setelah Klaim Berhasil (Light Mode)**
 ![Final State Light](img/8-claim-success-light.png)
+
+## Error Handling
+
+Aplikasi ini dilengkapi dengan penanganan *error* yang ramah pengguna untuk mencegah aplikasi *crash* dan memberikan umpan balik yang jelas.
+
+| Skenario Error | Deskripsi / Pesan Tampil | Contoh Tampilan Error |
+| -------------- | ------------------------ | --------------------- |
+| **Transaksi Dibatalkan** | Pengguna menekan tombol "Reject/Cancel" saat *popup* MetaMask meminta konfirmasi transaksi. Muncul pesan: *"Transaksi dibatalkan. Kamu menolak permintaan di MetaMask."* | ![Error Batal Transaksi](img/9-error-handling.png) |
+| **Saldo Kontrak Kosong** | Dosen memberikan *reward* tetapi lupa mengisi dana (*fund*) kontrak. Transaksi mahasiswa akan ditolak *smart contract*. | *(Opsional)* |
+| **Bukan Mahasiswa Terdaftar** | Mahasiswa mencoba klaim tanpa di-*whitelist* oleh dosen. | *(Opsional)* |
