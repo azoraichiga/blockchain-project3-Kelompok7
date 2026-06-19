@@ -15,7 +15,7 @@
 //     yang bisa membuat claim gagal walau reward tersedia.
 // =============================================================
 
-export const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const CONTRACT_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
 
 export const CONTRACT_ABI = [
   // --- READ ---
@@ -47,4 +47,4 @@ export const CONTRACT_ABI = [
 ];
 
 // Network yang diharapkan (Hardhat localhost). Ganti ke Sepolia (11155111) jadi bonus.
-export const EXPECTED_CHAIN_ID = 31337n;
+export const EXPECTED_CHAIN_ID = 1337n;

@@ -38,7 +38,7 @@ export default function App() {
         {account && wrongNetwork && (
           <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-            Network salah. Ganti ke Localhost 8545 di MetaMask.
+            Peringatan: MetaMask kamu sedang berada di Chain ID yang salah. Tolong ganti network.
           </div>
         )}
 

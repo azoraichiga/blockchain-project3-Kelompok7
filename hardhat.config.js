@@ -15,13 +15,13 @@ module.exports = {
   networks: {
     // Hardhat Network bawaan (untuk testing)
     hardhat: {
-      chainId: 31337,
+      chainId: 1337,
     },
 
     // Local node (npx hardhat node)
     localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
+      url: "http://127.0.0.1:8546",
+      chainId: 1337,
     },
 
     // Ganache (alternatif GUI)

@@ -55,7 +55,12 @@ export function useContract() {
   }, []);
 
   // ---- HELPER: buat provider + contract read-only ----
-  const getProvider = useCallback(() => new ethers.BrowserProvider(window.ethereum), []);
+  // Kita bypass MetaMask untuk operasi BACA (read-only) dengan langsung tembak ke RPC node kita.
+  // Ini mencegah bug MetaMask cache yang mengembalikan 0x (BAD_DATA) padahal kontraknya ada.
+  const getProvider = useCallback(() => new ethers.JsonRpcProvider("http://127.0.0.1:8546"), []);
+  
+  // Provider untuk WRITE (transaksi) tetap harus lewat MetaMask
+  const getSignerProvider = useCallback(() => new ethers.BrowserProvider(window.ethereum), []);
 
   // ---- READ OPERATIONS ----
   const readData = useCallback(async (addr) => {
@@ -77,7 +82,7 @@ export function useContract() {
       setContractBalance(Number(ethers.formatEther(balance)));
     } catch (e) {
       console.error("[useContract] readData() error:", e);
-      setError(friendlyError(e));
+      setError(`readData Error: ${e.message}`);
     } finally {
       setLoadingRead(false);
     }
@@ -96,8 +101,11 @@ export function useContract() {
       setAccount(addr);
 
       const provider = getProvider();
-      const net = await provider.getNetwork();
-      setWrongNetwork(net.chainId !== EXPECTED_CHAIN_ID);
+      
+      // Menggunakan request langsung ke MetaMask untuk menghindari bug ethers.js (NETWORK_ERROR)
+      const chainIdHex = await window.ethereum.request({ method: "eth_chainId" });
+      const currentChainId = BigInt(chainIdHex);
+      setWrongNetwork(currentChainId !== EXPECTED_CHAIN_ID);
 
       // Cek admin — kalau gagal, lanjut saja (isAdmin tetap false)
       try {
@@ -110,9 +118,22 @@ export function useContract() {
       }
 
       await readData(addr);
+
+      // Otomatis minta MetaMask untuk pindah ke Chain ID 1337 jika salah
+      if (currentChainId !== EXPECTED_CHAIN_ID) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x539' }], // 1337 dalam Hex
+          });
+        } catch (switchError) {
+          console.warn("Gagal switch network otomatis:", switchError);
+        }
+      }
+
     } catch (e) {
       console.error("[useContract] connect() error:", e);
-      setError(friendlyError(e));
+      setError(`Error connecting: ${e.message}. (Contract: ${CONTRACT_ADDRESS}, Chain: ${EXPECTED_CHAIN_ID})`);
     }
   }, [getProvider, readData]);
 
@@ -121,7 +142,7 @@ export function useContract() {
     setError(null);
     setTxStatus("pending");
     try {
-      const provider = getProvider();
+      const provider = getSignerProvider();
       const signer   = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const tx = await contract.claimReward();
@@ -150,7 +171,7 @@ export function useContract() {
     setError(null);
     setGrantStatus("pending");
     try {
-      const provider   = getProvider();
+      const provider   = getSignerProvider();
       const signer     = await provider.getSigner();
       const contract   = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const amountWei  = ethers.parseEther(String(amountEth));
@@ -182,7 +203,7 @@ export function useContract() {
     setError(null);
     setFundStatus("pending");
     try {
-      const provider = getProvider();
+      const provider = getSignerProvider();
       const signer   = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       const tx = await contract.fund({ value: ethers.parseEther(String(amountEth)) });
@@ -201,10 +222,11 @@ export function useContract() {
 
       if (account) await readData(account);
     } catch (e) {
+      console.error("[useContract] fund() error:", e);
       setFundStatus("failed");
-      setError(friendlyError(e));
+      setError(`Fund Error: ${e.message}`);
     }
-  }, [getProvider, pushToast, addHistory, account, readData]);
+  }, [getSignerProvider, pushToast, addHistory, account, readData]);
 
   // ---- HANDLE PERUBAHAN AKUN/NETWORK DARI METAMASK ----
   useEffect(() => {
