@@ -4,11 +4,11 @@ Aplikasi web (dApp) untuk sistem reward mahasiswa berbasis blockchain. Mahasiswa
 
 ## Anggota Kelompok
 
-| NRP        | Nama                | Kontribusi     |
-| ---------- | ------------------- | -------------- |
-| 5002221162 | Brigitta Lucia O H  | Smart Contract |
-| 5025221100 | Riyanda C Sinambela | Frontend UI/UX |
-|            |                     | Integrasi Web3 |
+| NRP        | Nama                    | Kontribusi     |
+| ---------- | ----------------------- | -------------- |
+| 5002221162 | Brigitta Lucia Orina H  | Smart Contract |
+| 5025221100 | Riyanda C Sinambela     | Frontend UI/UX |
+| 5027231023 | Muhammad Faqih Husain   | Integrasi Web3 |
 
 ## Tech Stack
 
