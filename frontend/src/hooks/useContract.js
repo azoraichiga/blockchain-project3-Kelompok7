@@ -108,12 +108,22 @@ export function useContract() {
       setWrongNetwork(net.chainId !== EXPECTED_CHAIN_ID);
 
       // Cek apakah akun yang connect adalah owner (dosen) kontrak.
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      const ownerAddr = await contract.owner();
-      setIsAdmin(ownerAddr.toLowerCase() === addr.toLowerCase());
+      // Dibungkus try-catch terpisah supaya kegagalan di sini tidak
+      // menghentikan readData() — admin check adalah nice-to-have,
+      // bukan syarat untuk menampilkan data mahasiswa.
+      try {
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        const ownerAddr = await contract.owner();
+        setIsAdmin(ownerAddr.toLowerCase() === addr.toLowerCase());
+      } catch (ownerErr) {
+        console.warn("[useContract] owner() check failed, defaulting isAdmin=false:", ownerErr?.message);
+        setIsAdmin(false);
+      }
 
+      // Selalu panggil readData, bahkan kalau owner() gagal.
       await readData(addr);
     } catch (e) {
+      console.error("[useContract] connect() error:", e);
       setError(friendlyError(e));
     }
   }, [readData]);
@@ -206,14 +216,14 @@ export function useContract() {
   }, [pushToast, account, readData]);
 
   // ---- EVENT LISTENING (real-time) ----
-  // Mendengarkan event RewardGranted & RewardClaimed langsung dari
-  // kontrak. Begini ini menjadi SATU-SATUNYA sumber riwayat transaksi —
-  // addHistory() manual di claim()/grantReward()/fundContract() sengaja
-  // dihapus supaya tidak dobel (kalau ada baris addHistory tersisa di
-  // fungsi-fungsi itu, hapus juga).
+  // Mendengarkan event RewardGranted & RewardClaimed langsung dari kontrak.
+  // pollingInterval diset 4000ms (default terlalu cepat untuk Hardhat localhost
+  // dan menyebabkan MetaMask rate-limit dirinya sendiri, menolak semua call
+  // termasuk owner() dan readData()).
   useEffect(() => {
     if (!account) return;
     const provider = new ethers.BrowserProvider(window.ethereum);
+    provider.pollingInterval = 4000; // kurangi eth_newFilter spam ke MetaMask
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
     const onGranted = (student, amount) => {
