@@ -57,6 +57,7 @@ contract CourseReward {
 
         whitelist[student] = true;
         rewardAmount[student] = amount;
+        hasClaimed[student] = false; // Reset claim status for multiple grants
 
         emit RewardGranted(student, amount);
     }

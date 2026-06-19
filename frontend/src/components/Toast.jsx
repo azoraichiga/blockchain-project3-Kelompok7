@@ -2,12 +2,12 @@ export default function Toast({ toasts, onDismiss }) {
   if (!toasts.length) return null;
 
   const tone = {
-    info: "border-indigo-200 bg-white text-slate-700",
-    success: "border-emerald-200 bg-white text-slate-700",
+    info: "border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300",
+    success: "border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   };
   const dot = {
-    info: "bg-indigo-500",
-    success: "bg-emerald-500",
+    info: "bg-indigo-500 dark:bg-indigo-400",
+    success: "bg-emerald-500 dark:bg-emerald-400",
   };
 
   return (

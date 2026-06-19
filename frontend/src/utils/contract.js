@@ -14,8 +14,7 @@
 //   - Ada deadline (claimDeadline) dan status aktif (isActive)
 //     yang bisa membuat claim gagal walau reward tersedia.
 // =============================================================
-
-export const CONTRACT_ADDRESS = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
+export const CONTRACT_ADDRESS = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
 
 export const CONTRACT_ABI = [
   // --- READ ---
@@ -47,4 +46,4 @@ export const CONTRACT_ABI = [
 ];
 
 // Network yang diharapkan (Hardhat localhost). Ganti ke Sepolia (11155111) jadi bonus.
-export const EXPECTED_CHAIN_ID = 31337n;
+export const EXPECTED_CHAIN_ID = 1337n;

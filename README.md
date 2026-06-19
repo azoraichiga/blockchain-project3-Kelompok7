@@ -20,13 +20,15 @@ Aplikasi web (dApp) untuk sistem reward mahasiswa berbasis blockchain. Mahasiswa
 
 ## Fitur
 
-- [ ] Connect Wallet (MetaMask)
-- [ ] Lihat reward amount (read)
-- [ ] Lihat status klaim (read)
-- [ ] Claim reward (write)
-- [ ] Grant reward via panel dosen (write)
-- [ ] Notifikasi real-time via events
-- [ ] Riwayat transaksi
+- [x] Connect Wallet (MetaMask)
+- [x] Lihat reward amount (read)
+- [x] Lihat status klaim (read)
+- [x] Claim reward (write)
+- [x] Grant reward via panel dosen (write)
+- [x] Notifikasi real-time & Toast
+- [x] Riwayat transaksi (live)
+- [x] Dark Mode (Bonus)
+- [x] Loading Skeleton (Bonus)
 
 ## Cara Menjalankan
 
@@ -71,7 +73,7 @@ Salin address dari output deploy, lalu tempel ke `frontend/src/utils/contract.js
 
 ### 6. Import Account ke MetaMask
 
-Salin private key dari output Hardhat node, import ke MetaMask, lalu ganti network ke Localhost 8545.
+Salin private key dari output Hardhat node, import ke MetaMask. Pastikan network MetaMask diarahkan ke **Localhost 8545** dengan **Chain ID 1337**.
 
 ### 7. Jalankan Frontend
 
@@ -86,8 +88,8 @@ http://localhost:5173
 
 ## Contract Address
 
-- Local:
-- Testnet (opsional):
+- Local: `0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6`
+- Testnet (opsional): *(Belum di-deploy)*
 
 ## Demo
 

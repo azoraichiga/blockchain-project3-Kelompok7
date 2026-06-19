@@ -1,15 +1,18 @@
+import { formatEther } from "ethers";
+
 export const shortAddress = (addr) =>
   addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
 
-// Reward sekarang ETH sungguhan (lihat CourseReward.sol: claimReward
-// memakai payable transfer). Format sebagai ETH, bukan token kustom.
-// amountWei bisa berupa BigInt (dari ethers v6) atau Number (dari mock).
+// Reward berupa ETH sungguhan (CourseReward.sol: claimReward memakai payable transfer).
+// amountWei dari kontrak berupa BigInt (ethers v6). Fungsi ini handle keduanya:
+//   - BigInt  → formatEther() dari ethers (hasilkan string desimal, misal "0.1")
+//   - Number  → tampilkan apa adanya (fallback / mock)
 export const formatETH = (amountWei) => {
   if (amountWei === null || amountWei === undefined) return "0 ETH";
-  // TODO(Web3): kalau amountWei berupa BigInt asli dari kontrak, pakai:
-  //   import { formatEther } from "ethers";
-  //   return `${formatEther(amountWei)} ETH`;
-  // Saat ini (mock) amountWei adalah angka kecil biasa, jadi tampilkan apa adanya.
+  if (typeof amountWei === "bigint") {
+    return `${formatEther(amountWei)} ETH`;
+  }
+  // Number biasa (hasil Number(ethers.formatEther(...)) di useContract.js)
   return `${amountWei} ETH`;
 };
 
