@@ -41,7 +41,7 @@ Aplikasi web (dApp) untuk sistem reward mahasiswa berbasis blockchain. Mahasiswa
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/azoraichiga/blockchainFP
+git clone https://github.com/blockchain-project3-Kelompok7
 cd blockchainFP
 ```
 
